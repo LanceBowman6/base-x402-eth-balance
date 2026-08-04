@@ -26,6 +26,20 @@ app.get("/health", (_req, res) => {
   });
 });
 
+app.get("/", (req, res) => {
+  const origin = `${req.protocol}://${req.get("host")}`;
+
+  res.json({
+    service: "Base x402 ETH Balance Service",
+    description: "x402-paid API for checking ETH balances on Base.",
+    price: `${process.env.PRICE ?? "0.001"} USDC`,
+    paymentNetwork: resolveX402Network(process.env.X402_NETWORK),
+    sellerAddress: process.env.SELLER_ADDRESS,
+    x402LinkTemplate: `${origin}/api/balance/{address}`,
+    example: `${origin}/api/balance/0x0000000000000000000000000000000000000000`,
+  });
+});
+
 app.use(createPaymentMiddleware());
 app.use("/api/balance", balanceRouter);
 

@@ -10,14 +10,3 @@ services:
       X402_NETWORK: ${X402_NETWORK:-base}
       PRICE: ${PRICE:-0.001}
       PORT: 3001
-
-  frontend:
-    build:
-      context: ./frontend
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
-        VITE_WALLETCONNECT_PROJECT_ID: ${VITE_WALLETCONNECT_PROJECT_ID}
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend

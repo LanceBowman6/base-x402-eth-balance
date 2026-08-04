@@ -1,102 +1,34 @@
 # Base x402 ETH Balance Service
 
-A full-stack x402 Seller demo on Base. Users connect a browser wallet, enter any Base wallet address, pay `0.001 USDC` through x402, and receive that address's ETH balance.
-
-This is a learning and testing project, not a production payment system.
-
-## Stack
-
-- Frontend: React, TypeScript, Vite, wagmi, viem, WalletConnect
-- Wallets: MetaMask, Coinbase Wallet, OKX Wallet through injected connectors, plus WalletConnect
-- Backend: Node.js, TypeScript, Express, official x402 SDK, viem
-- Chain: Base
-- Token: USDC
-
-## Structure
+Backend-only x402 Seller service. It exposes one paid API link:
 
 ```text
-base-x402-eth-balance/
-├── frontend/
-├── backend/
-├── README.md
-├── .env.example
-└── docker-compose.yml
+GET /api/balance/{address}
 ```
 
-## Environment
+An unpaid request returns `HTTP 402 Payment Required`. A compatible x402 client pays `0.001 USDC`, retries with the x402 payment header, and receives the Base ETH balance.
 
-Copy the root example:
+## Public Endpoint
 
-```bash
-cp .env.example .env
-```
-
-Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Set:
-
-```env
-SELLER_ADDRESS=0xYourSellerReceivingAddress
-BASE_RPC_URL=https://your-base-rpc.example
-X402_NETWORK=base
-PRICE=0.001
-
-VITE_API_URL=http://localhost:3001
-VITE_X402_NETWORK=base-sepolia
-VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
-```
-
-`X402_NETWORK=base-sepolia` maps to `eip155:84532` and works with the public x402 facilitator. `X402_NETWORK=base` maps to Base mainnet (`eip155:8453`), but the public `https://x402.org/facilitator` endpoint may reject it if mainnet settlement is not supported by the facilitator.
-
-## Local Development
-
-Install backend:
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-Install frontend in another terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open the Vite URL, usually:
+Railway API:
 
 ```text
-http://localhost:5173
+https://base-x402-eth-balance-backend-production.up.railway.app
 ```
 
-## Test Flow
+x402 link template:
 
-1. Start backend with `npm run dev` in `backend/`.
-2. Start frontend with `npm run dev` in `frontend/`.
-3. Open the frontend.
-4. Connect MetaMask, Coinbase Wallet, OKX Wallet, or WalletConnect.
-5. Make sure the wallet is on Base and has USDC plus ETH for any required gas.
-6. Enter a Base wallet address.
-7. Click `Check ETH Balance`.
-8. The backend returns `HTTP 402 Payment Required`.
-9. The frontend uses the official x402 client to create the payment header through the connected browser wallet.
-10. The x402 middleware verifies and settles payment.
-11. The API queries Base ETH balance with viem and returns JSON.
-
-Backend API:
-
-```http
-GET /api/balance/:address
+```text
+https://base-x402-eth-balance-backend-production.up.railway.app/api/balance/{address}
 ```
 
-Successful response:
+Example:
+
+```text
+https://base-x402-eth-balance-backend-production.up.railway.app/api/balance/0x0000000000000000000000000000000000000000
+```
+
+## What The API Returns
 
 ```json
 {
@@ -107,82 +39,49 @@ Successful response:
 }
 ```
 
-## Docker
-
-```bash
-docker compose up --build
-```
-
-Frontend:
-
-```text
-http://localhost:3000
-```
-
-Backend:
-
-```text
-http://localhost:3001
-```
-
-## Deploy
-
-### Backend on Railway
-
-The backend includes:
-
-- `backend/Dockerfile`
-- `backend/railway.json`
-
-Railway variables:
+## Environment
 
 ```env
-SELLER_ADDRESS=
-BASE_RPC_URL=
+SELLER_ADDRESS=0xYourSellerReceivingAddress
+BASE_RPC_URL=https://your-base-rpc.example
 X402_NETWORK=base-sepolia
 PRICE=0.001
 PORT=3001
 ```
 
-### Frontend on Vercel
+`SELLER_ADDRESS` is only the public receiving address. Never provide or store wallet private keys.
 
-The frontend includes:
+The public `https://x402.org/facilitator` currently works with `base-sepolia` (`eip155:84532`). It rejected Base mainnet (`eip155:8453`) during testing with `Facilitator does not support scheme "exact" on network "eip155:8453"`.
 
-- `frontend/vercel.json`
-- `frontend/Dockerfile`
-
-Vercel variables:
-
-```env
-VITE_API_URL=https://your-railway-backend-url
-VITE_WALLETCONNECT_PROJECT_ID=
-```
-
-## Security Rules
-
-- The server never receives or stores user private keys.
-- Users pay from browser wallets only.
-- This app does not implement swaps, transfer APIs, approve APIs, asset management, automatic trading, private-key storage, or custom smart contracts.
-- The only server-side blockchain action is reading public Base ETH balances after x402 payment verification and settlement.
-
-## Commands
-
-Backend:
+## Local Run
 
 ```bash
 cd backend
 npm install
-npm run typecheck
-npm run build
 npm run dev
 ```
 
-Frontend:
+Probe unpaid 402:
 
 ```bash
-cd frontend
-npm install
-npm run typecheck
-npm run build
-npm run dev
+curl -i http://localhost:3001/api/balance/0x0000000000000000000000000000000000000000
 ```
+
+## x402 Client Usage
+
+Any x402-compatible client can call the link. The client flow is:
+
+1. Request the API URL.
+2. Receive `HTTP 402 Payment Required`.
+3. Let x402 SDK parse the payment requirements.
+4. User wallet signs/pays USDC.
+5. Client retries with the x402 payment header.
+6. API verifies payment and returns ETH balance.
+
+## Security
+
+- No frontend app is required.
+- No buyer private key is sent to the server.
+- No swap, approve endpoint, transfer endpoint, custody, automatic trading, asset management, or smart contract is implemented.
+- The server only verifies x402 payment and reads public Base ETH balance data.
+
