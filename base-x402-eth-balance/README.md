@@ -46,16 +46,11 @@ X402_NETWORK=base
 PRICE=0.001
 
 VITE_API_URL=http://localhost:3001
+VITE_X402_NETWORK=base-sepolia
 VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
-
-X402_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402
-CDP_API_KEY_ID=your_cdp_api_key_id
-CDP_API_KEY_SECRET=your_cdp_api_key_secret
 ```
 
-`X402_NETWORK=base` maps to `eip155:8453`. You may use `base-sepolia` or `eip155:84532` for testnet development if your facilitator and USDC setup support it.
-
-For Base mainnet, use the CDP x402 facilitator URL and CDP API credentials. The public `https://x402.org/facilitator` endpoint is suitable for testnet development and may not support Base mainnet settlement.
+`X402_NETWORK=base-sepolia` maps to `eip155:84532` and works with the public x402 facilitator. `X402_NETWORK=base` maps to Base mainnet (`eip155:8453`), but the public `https://x402.org/facilitator` endpoint may reject it if mainnet settlement is not supported by the facilitator.
 
 ## Local Development
 
@@ -144,12 +139,9 @@ Railway variables:
 ```env
 SELLER_ADDRESS=
 BASE_RPC_URL=
-X402_NETWORK=base
+X402_NETWORK=base-sepolia
 PRICE=0.001
 PORT=3001
-X402_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402
-CDP_API_KEY_ID=
-CDP_API_KEY_SECRET=
 ```
 
 ### Frontend on Vercel

@@ -1,4 +1,5 @@
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
+import { type Network } from "@x402/core/types";
 import { ExactEvmScheme, toClientEvmSigner } from "@x402/evm";
 import { type WalletClient } from "viem";
 import { base } from "viem/chains";
@@ -13,6 +14,24 @@ export interface BalanceResponse {
 }
 
 const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/$/, "");
+
+function resolveX402Network(input = "base-sepolia"): Network {
+  const normalized = input.trim().toLowerCase();
+
+  if (normalized === "base") {
+    return "eip155:8453";
+  }
+
+  if (normalized === "base-sepolia" || normalized === "base_sepolia") {
+    return "eip155:84532";
+  }
+
+  if (normalized.startsWith("eip155:")) {
+    return normalized as Network;
+  }
+
+  throw new Error(`Unsupported VITE_X402_NETWORK "${input}".`);
+}
 
 export async function fetchBalanceWithX402(
   walletClient: WalletClient,
@@ -40,7 +59,7 @@ export async function fetchBalanceWithX402(
   const fetchWithPayment = wrapFetchWithPaymentFromConfig(fetch, {
     schemes: [
       {
-        network: "eip155:8453",
+        network: resolveX402Network(import.meta.env.VITE_X402_NETWORK),
         client: new ExactEvmScheme(signer),
       },
     ],

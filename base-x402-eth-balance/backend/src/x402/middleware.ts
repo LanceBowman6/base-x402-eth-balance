@@ -1,7 +1,6 @@
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
-import { createCdpFacilitatorClient } from "@coinbase/cdp-sdk/x402";
 import { isAddress, type Address } from "viem";
 import { resolveX402Network } from "./network.js";
 
@@ -23,10 +22,7 @@ export function createPaymentMiddleware() {
   const network = resolveX402Network(process.env.X402_NETWORK);
   const facilitatorUrl = process.env.X402_FACILITATOR_URL ?? DEFAULT_FACILITATOR_URL;
 
-  const hasCdpCredentials = Boolean(process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET);
-  const facilitatorClient = hasCdpCredentials
-    ? createCdpFacilitatorClient({ baseUrl: facilitatorUrl })
-    : new HTTPFacilitatorClient({ url: facilitatorUrl });
+  const facilitatorClient = new HTTPFacilitatorClient({ url: facilitatorUrl });
   const resourceServer = new x402ResourceServer(facilitatorClient).register(
     network,
     new ExactEvmScheme(),
