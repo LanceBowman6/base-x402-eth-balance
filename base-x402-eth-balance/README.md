@@ -1,12 +1,14 @@
 # Base x402 ETH Balance Service
 
-Backend-only x402 Seller service. It exposes one paid API link:
+Backend-only x402 Seller service using Base mainnet USDC payments.
+
+Paid API link:
 
 ```text
 GET /api/balance/{address}
 ```
 
-An unpaid request returns `HTTP 402 Payment Required`. A compatible x402 client pays `0.001 USDC`, retries with the x402 payment header, and receives the Base ETH balance.
+Unpaid requests return `HTTP 402 Payment Required`. A compatible x402 client pays `0.001 USDC` on Base mainnet, retries with the x402 payment header, and receives the wallet's ETH balance on Base.
 
 ## Public Endpoint
 
@@ -28,30 +30,22 @@ Example:
 https://base-x402-eth-balance-backend-production.up.railway.app/api/balance/0x0000000000000000000000000000000000000000
 ```
 
-## What The API Returns
-
-```json
-{
-  "address": "0x0000000000000000000000000000000000000000",
-  "network": "base",
-  "ethBalance": "0",
-  "timestamp": "2026-08-04T00:00:00.000Z"
-}
-```
-
 ## Environment
 
 ```env
 SELLER_ADDRESS=0xYourSellerReceivingAddress
 BASE_RPC_URL=https://your-base-rpc.example
-X402_NETWORK=base-sepolia
+X402_NETWORK=base
 PRICE=0.001
 PORT=3001
+X402_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402
+CDP_API_KEY_ID=
+CDP_API_KEY_SECRET=
 ```
 
 `SELLER_ADDRESS` is only the public receiving address. Never provide or store wallet private keys.
 
-The public `https://x402.org/facilitator` currently works with `base-sepolia` (`eip155:84532`). It rejected Base mainnet (`eip155:8453`) during testing with `Facilitator does not support scheme "exact" on network "eip155:8453"`.
+CDP credentials are used only to authenticate with the CDP-hosted x402 facilitator, which supports Base mainnet (`eip155:8453`) verification and settlement. The server does not custody buyer funds or buyer keys.
 
 ## Local Run
 
@@ -67,16 +61,15 @@ Probe unpaid 402:
 curl -i http://localhost:3001/api/balance/0x0000000000000000000000000000000000000000
 ```
 
-## x402 Client Usage
-
-Any x402-compatible client can call the link. The client flow is:
+## x402 Client Flow
 
 1. Request the API URL.
 2. Receive `HTTP 402 Payment Required`.
-3. Let x402 SDK parse the payment requirements.
-4. User wallet signs/pays USDC.
+3. Let the official x402 SDK parse the payment requirements.
+4. User wallet signs/pays USDC on Base mainnet.
 5. Client retries with the x402 payment header.
-6. API verifies payment and returns ETH balance.
+6. API verifies and settles payment through the facilitator.
+7. API returns ETH balance JSON.
 
 ## Security
 
