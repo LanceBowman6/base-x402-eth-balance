@@ -9,6 +9,8 @@ const app = express();
 const port = Number(process.env.PORT ?? 3001);
 const allowedOrigin = process.env.CORS_ORIGIN ?? "*";
 
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: allowedOrigin,
